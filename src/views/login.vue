@@ -12,13 +12,13 @@
         label-position="left"
       >
         <div class="title-container">
-          <h3 class="title">管理后台</h3>
+          <h3 class="title">{{ title }}管理后台</h3>
         </div>
         <div>
-          <el-form-item prop="account">
+          <el-form-item prop="name">
             <el-input
               ref="name"
-              v-model="form.account"
+              v-model="form.name"
               placeholder="用户名"
               type="text"
               tabindex="1"
@@ -68,12 +68,12 @@ export default {
     return {
       title: process.env.VUE_APP_TITLE,
       form: {
-        account: localStorage.login_account || '',
+        name: localStorage.login_name || '',
         password: '',
-        remember: !!localStorage.login_account
+        remember: !!localStorage.login_name
       },
       rules: {
-        account: [{ required: true, trigger: 'blur', message: '请输入用户名' }],
+        name: [{ required: true, trigger: 'blur', message: '请输入用户名' }],
         password: [
           { required: true, trigger: 'blur', message: '请输入密码' },
           { min: 6, max: 18, trigger: 'blur', message: '密码长度为6到18位' }
@@ -108,7 +108,7 @@ export default {
             .then(() => {
               this.loading = false
               this.form.remember &&
-                localStorage.setItem('login_account', this.form.account)
+                localStorage.setItem('login_name', this.form.name)
               this.$router.push({ path: this.redirect || '/' })
             })
             .catch(() => {
@@ -117,8 +117,8 @@ export default {
         }
       })
     },
-    testAccount(account) {
-      this.form.account = account
+    testname(name) {
+      this.form.name = name
       this.form.password = '123456'
       this.handleLogin()
     }

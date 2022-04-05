@@ -12,12 +12,7 @@ export default {
     return {
       tableConfig: {
         url: '/api/users/list',
-        // dataPath: 'content',
         columns: [
-          {
-            prop: 'account',
-            label: '账号'
-          },
           {
             prop: 'name',
             label: '用户名'
@@ -43,17 +38,17 @@ export default {
         form: [
           {
             type: 'input',
-            id: 'account',
-            label: '手机号',
+            id: 'name',
+            label: '用户名',
             rules: [
               {
                 required: true,
-                message: '请输入手机号',
+                message: '请输入用户名',
                 trigger: 'blur',
                 transform: v => v && v.trim()
               }
             ],
-            el: { placeholder: '请输入手机号' }
+            el: { placeholder: '请输入用户名' }
           },
           {
             type: 'input',
@@ -67,12 +62,7 @@ export default {
                 transform: v => v && v.trim()
               }
             ],
-            el: { placeholder: '请输入密码' }
-          },
-          {
-            type: 'input',
-            id: 'name',
-            label: '姓名'
+            el: { placeholder: '请输入密码', type: 'password' }
           },
           {
             type: 'select',
@@ -92,12 +82,26 @@ export default {
         onNew: data => {
           return this.$api.post('/api/users/create', data)
         },
-        onEdit: data => {
-          console.log(12312)
-          return this.$api.put('/api/users/update', data)
+        onEdit: (data, row) => {
+          if (row.id != this.$store.state.user.id && this.$store.state.user.level == 3 && row.level == 1) {
+            this.$message.error('你不是管理员无权限进行此操作')
+            return Promise.reject(false)
+          }
+          return this.$api.put('/api/users/update/' + data.id, data)
+        },
+        onDelete: (data, row) => {
+          if (row.id != this.$store.state.user.id && this.$store.state.user.level == 3 && row.level == 1) {
+            this.$message.error('你不是管理员无权限进行此操作')
+            return Promise.reject(false)
+          }
+          return this.$api.delete('/api/users/delete/' + data.id)
         }
       }
     }
+  },
+  mounted() {
+  },
+  methods: {
   }
 }
 </script>

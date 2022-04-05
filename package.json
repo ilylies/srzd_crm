@@ -16,7 +16,7 @@
         "@tinymce/tinymce-vue": "^3.2.6",
         "axios": "^0.21.0",
         "core-js": "^3.6.4",
-        "dayjs": "^1.9.4",
+        "dayjs": "^1.11.0",
         "element-ui": "^2.14.0",
         "hotkeys-js": "^3.8.1",
         "nprogress": "^0.2.0",

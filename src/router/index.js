@@ -67,8 +67,8 @@ const constantRoutes = [
   }
 ]
 
-import MultilevelMenuExample from './modules/multilevel.menu.example'
-import BreadcrumbExample from './modules/breadcrumb.example'
+import users from './modules/users'
+import sales_slip from './modules/sales_slip'
 
 // 当 children 不为空的主导航只有一项时，则隐藏
 let asyncRoutes = [
@@ -77,7 +77,7 @@ let asyncRoutes = [
       title: '演示',
       icon: 'sidebar-default'
     },
-    children: [MultilevelMenuExample, BreadcrumbExample]
+    children: [sales_slip, users]
   }
 ]
 

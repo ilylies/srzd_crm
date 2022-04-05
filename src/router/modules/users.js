@@ -2,51 +2,62 @@ import Layout from '@/layout'
 // import EmptyLayout from '@/layout/empty'
 
 export default {
-  path: '/account',
+  path: '/user',
   component: Layout,
-  redirect: '/account/list',
-  name: 'accountExample',
+  redirect: '/user/list',
+  name: 'nameExample',
   meta: {
     title: '账号管理',
-    icon: 'sidebar-breadcrumb'
+    icon: 'user'
   },
   children: [
     {
       path: 'list',
-      name: 'accountList',
+      name: 'userList',
       component: () =>
         import(
-          /* webpackChunkName: 'account_example' */ '@/views/account_example/list'
+          /* webpackChunkName: 'name_example' */ '@/views/users_example/list'
         ),
       meta: {
         title: '账号列表'
       }
     },
     {
-      path: 'detail',
-      name: 'accountDetail',
+      path: 'team',
+      name: 'teamList',
       component: () =>
         import(
-          /* webpackChunkName: 'account_example' */ '@/views/account_example/detail'
+          /* webpackChunkName: 'name_example' */ '@/views/users_example/team'
+        ),
+      meta: {
+        title: '团队列表'
+      }
+    },
+    {
+      path: 'detail',
+      name: 'userDetail',
+      component: () =>
+        import(
+          /* webpackChunkName: 'name_example' */ '@/views/users_example/detail'
         ),
       meta: {
         title: '账号详情',
         sidebar: false,
-        activeMenu: '/account/list'
+        activeMenu: '/user/list'
       }
     }
     // {
     //     path: 'list2',
     //     name: 'breadcrumbExampleList2',
     //     component: EmptyLayout,
-    //     redirect: '/account_example/list2',
+    //     redirect: '/name_example/list2',
     //     meta: {
     //         title: '列表2（层级模式）'
     //     },
     //     children: [
     //         {
     //             path: '',
-    //             component: () => import(/* webpackChunkName: 'account_example' */ '@/views/account_example/list2'),
+    //             component: () => import(/* webpackChunkName: 'name_example' */ '@/views/name_example/list2'),
     //             meta: {
     //                 title: '列表2（层级模式）',
     //                 sidebar: false,
@@ -56,11 +67,11 @@ export default {
     //         {
     //             path: 'detail2',
     //             name: 'breadcrumbExampleDetail2',
-    //             component: () => import(/* webpackChunkName: 'account_example' */ '@/views/account_example/detail2'),
+    //             component: () => import(/* webpackChunkName: 'name_example' */ '@/views/name_example/detail2'),
     //             meta: {
     //                 title: '详情2',
     //                 sidebar: false,
-    //                 activeMenu: '/account_example/list2'
+    //                 activeMenu: '/name_example/list2'
     //             }
     //         }
     //     ]

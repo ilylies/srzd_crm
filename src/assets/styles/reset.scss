@@ -39,3 +39,20 @@ body {
 textarea {
     font-family: inherit;
 }
+.el-data-table {
+    .el-form-item__content {
+        display: inline-block;
+        margin-left: 20px !important;
+    }
+    .el-form-item__error {
+        position: static;
+    }
+    .el-form-item__label {
+        min-width: 80px;
+    }
+}
+@media screen and (max-width: 780px) {
+    .el-dialog {
+        width: 90vw;
+    }
+}

@@ -4,8 +4,14 @@
         "allowSyntheticDefaultImports": false,
         "baseUrl": "./",
         "paths": {
-            "@/*": ["src/*"]
+            "@/*": [
+                "src/*"
+            ]
         }
     },
-    "exclude": ["node_modules", "dist", "dist-test"]
+    "exclude": [
+        "node_modules",
+        "dist",
+        "dist-test"
+    ]
 }

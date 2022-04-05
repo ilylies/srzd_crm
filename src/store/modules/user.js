@@ -1,7 +1,6 @@
-import api from '@/api'
+import api from '@/util/request'
 
 const state = {
-  account: localStorage.account || '',
   token: localStorage.token || '',
   id: localStorage.id || '',
   name: localStorage.name || '',
@@ -22,18 +21,22 @@ const actions = {
   login({ commit }, data) {
     return new Promise((resolve, reject) => {
       // 通过 mock 进行登录
-      api
-        .get('/api/users/login', {
-          params: data
-        })
-        .then(res => {
-          console.log('[ res ] >', res)
-          commit('setUserData', res.payload)
-          resolve()
-        })
-        .catch(error => {
-          reject(error)
-        })
+      try {
+        api
+          .$get('/api/users/login', {
+            params: data
+          })
+          .then(res => {
+            commit('setUserData', res.payload)
+            resolve()
+          })
+          .catch(error => {
+            reject(error)
+          })
+      } catch (error) {
+        console.log(error)
+      }
+      
     })
   },
   logout({ commit }) {
@@ -47,7 +50,7 @@ const actions = {
       api
         .get('mock/member/permission', {
           params: {
-            account: state.account
+            name: state.name
           }
         })
         .then(res => {
@@ -60,23 +63,23 @@ const actions = {
 
 const mutations = {
   setUserData(state, data) {
-    localStorage.setItem('account', data.account)
+    localStorage.setItem('name', data.name)
     localStorage.setItem('token', data.token)
     localStorage.setItem('name', data.name)
     localStorage.setItem('id', data.id)
     localStorage.setItem('level', data.level)
-    state.account = data.account
+    state.name = data.name
     state.token = data.token
     state.name = data.name
     state.level = data.level
   },
   removeUserData(state) {
-    localStorage.removeItem('account')
+    localStorage.removeItem('name')
     localStorage.removeItem('token')
     localStorage.removeItem('name')
     localStorage.removeItem('id')
     localStorage.removeItem('level')
-    state.account = ''
+    state.name = ''
     state.token = ''
     state.name = ''
     state.id = ''

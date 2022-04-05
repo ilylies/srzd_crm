@@ -7,7 +7,7 @@ module.exports = [
         error: '',
         status: 1,
         data: {
-          account: option.body.account,
+          name: option.body.name,
           token: '@string',
           failure_time: Date.parse(new Date()) / 1000 + 24 * 60 * 60
         }
@@ -19,14 +19,14 @@ module.exports = [
     type: 'get',
     result: option => {
       let permissions = []
-      if (option.query.account == 'admin') {
+      if (option.query.name == 'admin') {
         permissions = [
           'permission.browse',
           'permission.create',
           'permission.edit',
           'permission.remove'
         ]
-      } else if (option.query.account == 'test') {
+      } else if (option.query.name == 'test') {
         permissions = ['permission.browse']
       }
       return {

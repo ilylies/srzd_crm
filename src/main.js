@@ -2,9 +2,7 @@ import Vue from 'vue'
 import App from './App.vue'
 import router from './router/index'
 import store from './store/index'
-
-import api from './api'
-Vue.prototype.$api = api
+import '@/server/apiClient'
 
 import dayjs from 'dayjs'
 Vue.prototype.$dayjs = dayjs
@@ -18,16 +16,16 @@ Vue.use(cookies)
 import VueMeta from 'vue-meta'
 Vue.use(VueMeta)
 
-import ElementUI from 'element-ui'
+import ElementUI, {Message, MessageBox} from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import ElDataTable from '@femessage/el-data-table'
 import ElFormRenderer from '@femessage/el-form-renderer'
 Vue.use(ElementUI)
+Vue.prototype.$message = Message
+Vue.prototype.$confirm = MessageBox.confirm
 
 Vue.component('el-form-renderer', ElFormRenderer)
 Vue.component('el-data-table', ElDataTable)
-
-Vue.prototype.$axios = api
 
 import hotkeys from 'hotkeys-js'
 Vue.prototype.$hotkeys = hotkeys
