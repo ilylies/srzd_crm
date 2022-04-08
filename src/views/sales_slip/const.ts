@@ -62,9 +62,5 @@ export const APPROPRIATION_STATYS_OPTIONS = [
   {
     value: 8,
     label: '网商'
-  },
-  {
-    value: 9,
-    label: '其他金额'
   }
 ]

@@ -1,23 +1,12 @@
 <template>
   <div>
     <page-main>
-      <el-data-table ref="table" v-bind="tableConfig" :form="form">
-      <!-- <template #form>
-          <div class="appropriation-status">
-            <div>批款情况：</div>
-            <el-select v-model="appropriation_status" placeholder="请选择">
-              <el-option
-                v-for="item in APPROPRIATION_STATYS_OPTIONS"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-            <el-input v-if="appropriation_status===9" v-model="money" placeholder="请输入金额" />
-          </div>
-        </template>
-      </el-data-table> -->
-      </el-data-table>
+      <el-data-table
+        ref="table"
+        v-bind="tableConfig"
+        :form="form"
+        :search-form="searchForm"
+      />
     </page-main>
   </div>
 </template>
@@ -27,7 +16,6 @@ import { APPROPRIATION_STATYS_OPTIONS, COMPANY_TAGS_OPTIONS } from './const.ts'
 export default {
   data() {
     return {
-      APPROPRIATION_STATYS_OPTIONS,
       appropriation_status: '',
       money: '',
       tableConfig: {
@@ -36,7 +24,7 @@ export default {
           {
             prop: 'create_time',
             label: '建档时间',
-            formatter: ({create_time}) => {
+            formatter: ({ create_time }) => {
               return dayjs(create_time).format('YYYY-MM-DD HH:mm:ss')
             }
           },
@@ -50,13 +38,14 @@ export default {
           },
           {
             prop: 'company_phone',
-            label: '联系电话'
+            label: '放款金额'
           },
           {
             prop: 'company_tags',
             label: '企业标签',
-            formatter: ({company_tags}) => {
-              return COMPANY_TAGS_OPTIONS.find(i => i.value === company_tags).label
+            formatter: ({ company_tags }) => {
+              return COMPANY_TAGS_OPTIONS.find(i => i.value === company_tags)
+                .label
             }
           },
           {
@@ -66,33 +55,25 @@ export default {
           {
             prop: 'appropriation_status',
             label: '批款情况',
-            formatter: ({appropriation_status}) => {
-              const data = APPROPRIATION_STATYS_OPTIONS.find(i => i.value == appropriation_status)
+            formatter: ({ appropriation_status }) => {
+              const data = APPROPRIATION_STATYS_OPTIONS.find(
+                i => i.value == appropriation_status
+              )
               return data ? data.label : appropriation_status
             }
           },
           {
             prop: 'team',
             label: '所属团队',
-            formatter: ({team}) => {
+            formatter: ({ team }) => {
               return this.teamList.find(i => i.value === team).label
             }
           },
           {
             prop: 'telemarketer',
             label: '电销员',
-            formatter: ({telemarketer}) => {
+            formatter: ({ telemarketer }) => {
               return this.userList.find(i => i.value === telemarketer).label
-            }
-          }
-        ],
-        searchForm: [
-          {
-            type: 'input',
-            id: 'company_name',
-            label: '企业名称',
-            el: {
-              placeholder: '请输入'
             }
           }
         ],
@@ -100,14 +81,20 @@ export default {
           return this.$api.post('/api/saleSlips/create', data)
         },
         onEdit: (data, row) => {
-          if (row.telemarketer != this.$store.state.user.id && this.$store.state.user.level != 1) {
+          if (
+            row.telemarketer != this.$store.state.user.id &&
+            this.$store.state.user.level != 1
+          ) {
             this.$message.error('你不是管理员或此订单电销员，无权进行此操作')
             return Promise.reject(false)
           }
           return this.$api.put('/api/saleSlips/update/' + data.id, data)
         },
         onDelete: (data, row) => {
-          if (row.telemarketer != this.$store.state.user.id && this.$store.state.user.level != 1) {
+          if (
+            row.telemarketer != this.$store.state.user.id &&
+            this.$store.state.user.level != 1
+          ) {
             this.$message.error('你不是此订单电销员或管理员，无权进行此操作')
             return Promise.reject(false)
           }
@@ -119,6 +106,61 @@ export default {
     }
   },
   computed: {
+    searchForm() {
+      return [
+        {
+          type: 'input',
+          id: 'company_name',
+          label: '企业名称',
+          el: {
+            placeholder: '请输入'
+          }
+        },
+        {
+          type: 'select',
+          id: 'company_tags',
+          label: '企业标签',
+          options: COMPANY_TAGS_OPTIONS,
+          el: {
+            placeholder: '请选择',
+            clearable: true
+          }
+        },
+        {
+          type: 'select',
+          id: 'appropriation_status',
+          label: '批款情况',
+          options: APPROPRIATION_STATYS_OPTIONS,
+          el: {
+            placeholder: '请选择(其他金额请直接输入)',
+            clearable: true,
+            filterable: true,
+            'allow-create': true,
+            'default-first-option': true
+          }
+        },
+        {
+          type: 'select',
+          id: 'team',
+          label: '所属团队',
+          options: this.teamList,
+          el: {
+            placeholder: '请选择',
+            clearable: true
+          }
+        },
+        {
+          type: 'select',
+          id: 'telemarketer',
+          label: '电销员',
+          options: this.userList,
+          el: {
+            placeholder: '请选择',
+            clearable: true
+          }
+        }
+      ]
+    },
     form() {
       return [
         {
@@ -139,6 +181,7 @@ export default {
           type: 'input',
           id: 'company_contact_name',
           label: '企业联系人/法人',
+          disabled: () => true,
           rules: [
             {
               required: true,
@@ -152,16 +195,16 @@ export default {
         {
           type: 'input',
           id: 'company_phone',
-          label: '联系电话',
+          label: '放款金额',
           rules: [
             {
               required: true,
-              message: '请输入联系电话',
+              message: '请输入放款金额',
               trigger: 'blur',
               transform: v => v && v.trim()
             }
           ],
-          el: { placeholder: '请输入联系电话' }
+          el: { placeholder: '请输入放款金额' }
         },
         {
           type: 'select',
@@ -203,7 +246,12 @@ export default {
               trigger: 'blur'
             }
           ],
-          el: { placeholder: '请选择批款情况', filterable: true, 'allow-create': true, 'default-first-option': true }
+          el: {
+            placeholder: '请选择(其他金额请直接输入)',
+            filterable: true,
+            'allow-create': true,
+            'default-first-option': true
+          }
         },
         {
           type: 'select',
@@ -242,30 +290,33 @@ export default {
   },
   methods: {
     getUsersByLevel() {
-      this.$api.$get('/api/users/list', {params: {page: 1, size: 99999}}).then(res => {
-        this.userList = res.payload.content.map(i => {
-          return {
-            label: i.name,
-            value: i.id
-          }
+      this.$api
+        .$get('/api/users/list', { params: { page: 1, size: 99999 } })
+        .then(res => {
+          this.userList = res.payload.content.map(i => {
+            return {
+              label: i.name,
+              value: i.id
+            }
+          })
         })
-      })
     },
     getTeamList() {
-      this.$api.$get('/api/team/list', {params: {page: 1, size: 99999}}).then(res => {
-        this.teamList = res.payload.content.map(i => {
-          return {
-            label: i.name,
-            value: i.id
-          }
+      this.$api
+        .$get('/api/team/list', { params: { page: 1, size: 99999 } })
+        .then(res => {
+          this.teamList = res.payload.content.map(i => {
+            return {
+              label: i.name,
+              value: i.id
+            }
+          })
         })
-      })
-      
     }
   }
 }
 </script>
-<style lang="scss" >
+<style lang="scss">
 .appropriation-status {
     display: flex;
 }

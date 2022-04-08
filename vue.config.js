@@ -86,18 +86,39 @@ module.exports = {
             config.externals = externals
         }
         config.optimization = {
-            minimizer: [
-                new terserPlugin({
-                    terserOptions: {
-                        compress: {
-                            warnings: false,
-                            drop_console: true,
-                            drop_debugger: true,
-                            pure_funcs: ['console.log']
-                        }
-                    }
-                })
-            ]
+          // runtimeChunk: true,
+          splitChunks: {
+            minSize: 10240,
+            maxSize: 30000,
+            cacheGroups: {
+              vendors: {
+                test: /[\\/]node_modules[\\/]/,
+                priority: -10
+              },
+              default: {
+                minChunks: 2,
+                priority: -20,
+                reuseExistingChunk: true
+              },
+              elementUI: {
+                name: 'chunk-elementUI', // split elementUI into a single package
+                priority: 20, // the weight needs to be larger than libs and app or it will be packaged into libs or app
+                test: /[\\/]node_modules[\\/]_?element-ui(.*)/ // in order to adapt to cnpm
+              }
+            }
+          },
+          minimizer: [
+              new terserPlugin({
+                  terserOptions: {
+                      compress: {
+                          warnings: false,
+                          drop_console: true,
+                          drop_debugger: true,
+                          pure_funcs: ['console.log']
+                      }
+                  }
+              })
+          ]
         }
         if (isGZIP) {
             return {

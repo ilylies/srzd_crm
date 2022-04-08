@@ -54,6 +54,7 @@ axios.interceptors.response.use(
     if (response.data.code != 200) {
       // 如果接口请求时发现 token 失效，则立马跳转到登录页
       if (response.data.code == 401) {
+        store.commit('user/removeUserData')
         toLogin()
       }
       Message.error(response.data.msg)
