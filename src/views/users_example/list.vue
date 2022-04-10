@@ -83,14 +83,15 @@ export default {
           return this.$api.post('/api/users/create', data)
         },
         onEdit: (data, row) => {
-          if (row.id != this.$store.state.user.id && this.$store.state.user.level == 3 && row.level == 1) {
+          console.log(this.$store.state.user)
+          if (row.id != this.$store.state.user.id && this.$store.state.user.level != 1) {
             this.$message.error('你不是管理员无权限进行此操作')
             return Promise.reject(false)
           }
           return this.$api.put('/api/users/update/' + data.id, data)
         },
         onDelete: (data, row) => {
-          if (row.id != this.$store.state.user.id && this.$store.state.user.level == 3 && row.level == 1) {
+          if (row.id != this.$store.state.user.id && this.$store.state.user.level != 1) {
             this.$message.error('你不是管理员无权限进行此操作')
             return Promise.reject(false)
           }

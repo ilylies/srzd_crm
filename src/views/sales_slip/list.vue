@@ -7,6 +7,13 @@
         :form="form"
         :search-form="searchForm"
       />
+      <el-dialog title="跟进记录" :visible.sync="dialogTableVisible">
+        <el-table :data="recordList">
+          <el-table-column property="userId" label="修改人" :formatter="userIdFormatter" width="150" />
+          <el-table-column property="content" label="跟进记录" width="200" />
+          <el-table-column property="createTime" label="创建时间" />
+        </el-table>
+      </el-dialog>
     </page-main>
   </div>
 </template>
@@ -16,10 +23,20 @@ import { APPROPRIATION_STATYS_OPTIONS, COMPANY_TAGS_OPTIONS } from './const.ts'
 export default {
   data() {
     return {
+      dialogTableVisible: false,
       appropriation_status: '',
       money: '',
+      recordList: [],
       tableConfig: {
         url: '/api/saleSlips/list',
+        tableEventHandlers: {
+          'cell-click': (row, column) => {
+            if (column.property === 'record') {
+              this.recordList = JSON.parse(row.record)
+              this.dialogTableVisible = true
+            }
+          }
+        },
         columns: [
           {
             prop: 'create_time',
@@ -50,7 +67,10 @@ export default {
           },
           {
             prop: 'record',
-            label: '跟进记录'
+            label: '跟进记录',
+            formatter: () => {
+              return <el-button type="text">查看</el-button>
+            }
           },
           {
             prop: 'appropriation_status',
@@ -78,21 +98,32 @@ export default {
           }
         ],
         onNew: data => {
-          return this.$api.post('/api/saleSlips/create', data)
+          const record = JSON.stringify([{
+            userId: this.$store.state.user.id,
+            createTime: dayjs(new Date()).format('YYYY-MM-DD HH:mm:ss'),
+            content: data.addRecord
+          }])
+          return this.$api.post('/api/saleSlips/create', Object.assign({}, {...data, record}))
         },
         onEdit: (data, row) => {
           if (
             row.telemarketer != this.$store.state.user.id &&
-            this.$store.state.user.level != 1
+            !this.disabledFn(row)
           ) {
             this.$message.error('你不是管理员或此订单电销员，无权进行此操作')
             return Promise.reject(false)
           }
-          return this.$api.put('/api/saleSlips/update/' + data.id, data)
+          const record = {
+            userId: this.$store.state.user.id,
+            createTime: dayjs(new Date()).format('YYYY-MM-DD HH:mm:ss'),
+            content: data.addRecord
+          }
+          const recordList = JSON.parse(row.record)
+          recordList.push(record)
+          return this.$api.put('/api/saleSlips/update/' + data.id, Object.assign({}, {...data, record: JSON.stringify(recordList)}))
         },
-        onDelete: (data, row) => {
+        onDelete: data => {
           if (
-            row.telemarketer != this.$store.state.user.id &&
             this.$store.state.user.level != 1
           ) {
             this.$message.error('你不是此订单电销员或管理员，无权进行此操作')
@@ -181,7 +212,6 @@ export default {
           type: 'input',
           id: 'company_contact_name',
           label: '企业联系人/法人',
-          disabled: () => true,
           rules: [
             {
               required: true,
@@ -222,13 +252,11 @@ export default {
         },
         {
           type: 'input',
-          id: 'record',
-          label: '跟进记录',
+          id: 'addRecord',
+          label: '新增跟进记录',
           rules: [
             {
-              required: true,
               message: '请输入跟进记录',
-              trigger: 'blur',
               transform: v => v && v.trim()
             }
           ],
@@ -308,10 +336,22 @@ export default {
           this.teamList = res.payload.content.map(i => {
             return {
               label: i.name,
-              value: i.id
+              value: i.id,
+              captain: i.captain
             }
           })
         })
+    },
+    userIdFormatter(row) {
+      return this.userList.find(i => i.value === Number(row.userId)).label
+    },
+    disabledFn(row) {
+      const findTeamCaptain = this.teamList.find(i => i.value === row.team).captain
+      if (findTeamCaptain === this.$store.state.user.id || this.$store.state.user.level === 1) {
+        // 所属团长或管理员
+        return true
+      }
+      return false
     }
   }
 }

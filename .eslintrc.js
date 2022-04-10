@@ -85,6 +85,7 @@ module.exports = {
         'vue/script-indent': [2, 2, {
             'switchCase': 1
         }],
-        'vue/component-definition-name-casing': 'off'
+        'vue/component-definition-name-casing': 'off',
+        'no-debugger': 'off'
     }
 };
