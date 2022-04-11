@@ -35,6 +35,10 @@ body {
 * {
     box-sizing: inherit;
 }
+ul {
+    list-style-type: none;
+    padding: 0;
+}
 // textarea 字体跟随系统
 textarea {
     font-family: inherit;

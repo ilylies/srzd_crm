@@ -19,7 +19,7 @@
 </template>
 <script>
 import dayjs from 'dayjs'
-import { APPROPRIATION_STATYS_OPTIONS, COMPANY_TAGS_OPTIONS } from './const.ts'
+import { APPROPRIATION_STATYS_OPTIONS, COMPANY_TAGS_OPTIONS } from './const.js'
 export default {
   data() {
     return {
@@ -54,7 +54,7 @@ export default {
             label: '企业联系人/法人'
           },
           {
-            prop: 'company_phone',
+            prop: 'loan_amount',
             label: '放款金额'
           },
           {
@@ -119,14 +119,17 @@ export default {
             content: data.addRecord
           }
           const recordList = JSON.parse(row.record)
-          recordList.push(record)
+            
+          if (data.addRecord) {
+            recordList.push(record)
+          }
           return this.$api.put('/api/saleSlips/update/' + data.id, Object.assign({}, {...data, record: JSON.stringify(recordList)}))
         },
         onDelete: data => {
           if (
             this.$store.state.user.level != 1
           ) {
-            this.$message.error('你不是此订单电销员或管理员，无权进行此操作')
+            this.$message.error('你不是管理员，无权进行此操作')
             return Promise.reject(false)
           }
           return this.$api.delete('/api/saleSlips/delete/' + data.id)
@@ -198,6 +201,7 @@ export default {
           type: 'input',
           id: 'company_name',
           label: '企业名称',
+          disabled: row => !this.disabledFn(row),
           rules: [
             {
               required: true,
@@ -212,6 +216,7 @@ export default {
           type: 'input',
           id: 'company_contact_name',
           label: '企业联系人/法人',
+          disabled: row => !this.disabledFn(row),
           rules: [
             {
               required: true,
@@ -224,8 +229,9 @@ export default {
         },
         {
           type: 'input',
-          id: 'company_phone',
+          id: 'loan_amount',
           label: '放款金额',
+          disabled: row => !this.disabledFn(row),
           rules: [
             {
               required: true,
@@ -241,6 +247,7 @@ export default {
           id: 'company_tags',
           label: '企业标签',
           options: COMPANY_TAGS_OPTIONS,
+          disabled: row => !this.disabledFn(row),
           rules: [
             {
               required: true,
@@ -267,6 +274,7 @@ export default {
           id: 'appropriation_status',
           label: '批款情况',
           options: APPROPRIATION_STATYS_OPTIONS,
+          disabled: row => !this.disabledFn(row),
           rules: [
             {
               required: true,
@@ -286,6 +294,7 @@ export default {
           id: 'team',
           label: '所属团队',
           options: this.teamList,
+          disabled: row => !this.disabledFn(row),
           rules: [
             {
               required: true,
@@ -300,6 +309,7 @@ export default {
           id: 'telemarketer',
           label: '电销员',
           options: this.userList,
+          disabled: row => !this.disabledFn(row),
           rules: [
             {
               required: true,
@@ -343,11 +353,12 @@ export default {
         })
     },
     userIdFormatter(row) {
-      return this.userList.find(i => i.value === Number(row.userId)).label
+      return this.userList.find(i => i.value == Number(row.userId)).label
     },
     disabledFn(row) {
-      const findTeamCaptain = this.teamList.find(i => i.value === row.team).captain
-      if (findTeamCaptain === this.$store.state.user.id || this.$store.state.user.level === 1) {
+      const data = this.teamList.find(i => i.value == row.team)
+      const findTeamCaptain = data && data.captain
+      if (findTeamCaptain == this.$store.state.user.id || this.$store.state.user.level == 1) {
         // 所属团长或管理员
         return true
       }

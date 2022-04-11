@@ -97,7 +97,7 @@ export default {
             prop: 'captain',
             label: '团长',
             formatter: ({captain}) => {
-              return this.captainList.find(i => {
+              return this.userList.find(i => {
                 return captain === i.value
               }).label
             }
@@ -106,9 +106,9 @@ export default {
             prop: 'members',
             label: '团员',
             formatter: ({members}) => {
-              return this.membersList.filter(i => {
+              return this.userList.filter(i => {
                 return members.includes(i.value)
-              }).map(i => i.label).join(',')
+              }).map(item => item.label).join(',')
             }
           }
         ],
@@ -167,6 +167,7 @@ export default {
           el: { placeholder: '请选择团员', multiple: true, filterable: true }
         }
       ],
+      userList: [],
       captainList: [],
       membersList: [],
       updateData: {}
@@ -177,11 +178,13 @@ export default {
   mounted() {
     this.getUsersByLevel('1,2')
     this.getUsersByLevel(3)
+    this.getUsersByLevel('')
   },
   methods: {
     getUsersByLevel(level) {
       this.$api.$get('/api/users/usersByLevel', {params: {level}}).then(res => {
-        this[level === 3 ? 'membersList' : 'captainList'] = res.payload.map(i => {
+
+        this[level === 3 ? 'membersList' : level ? 'captainList' : 'userList'] = res.payload.map(i => {
           return {
             label: i.name,
             value: i.id

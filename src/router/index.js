@@ -69,6 +69,7 @@ const constantRoutes = [
 
 import users from './modules/users'
 import sales_slip from './modules/sales_slip'
+import statistics from './modules/statistics'
 
 // 当 children 不为空的主导航只有一项时，则隐藏
 let asyncRoutes = [
@@ -77,7 +78,7 @@ let asyncRoutes = [
       title: '演示',
       icon: 'sidebar-default'
     },
-    children: [sales_slip, users]
+    children: [statistics, sales_slip, users]
   }
 ]
 

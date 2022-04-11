@@ -27,6 +27,7 @@ const actions = {
             params: data
           })
           .then(res => {
+            console.log(res.payload)
             commit('setUserData', res.payload)
             resolve()
           })
@@ -68,6 +69,7 @@ const mutations = {
     localStorage.setItem('name', data.name)
     localStorage.setItem('id', data.id)
     localStorage.setItem('level', data.level)
+    state.id = data.id
     state.name = data.name
     state.token = data.token
     state.name = data.name
