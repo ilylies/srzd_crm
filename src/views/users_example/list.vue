@@ -84,25 +84,29 @@ export default {
         },
         onEdit: (data, row) => {
           console.log(this.$store.state.user)
-          if (row.id != this.$store.state.user.id && this.$store.state.user.level != 1) {
+          if (
+            row.id != this.$store.state.user.id &&
+            this.$store.state.user.level != 1
+          ) {
             this.$message.error('你不是管理员无权限进行此操作')
             return Promise.reject(false)
           }
           return this.$api.put('/api/users/update/' + data.id, data)
         },
-        onDelete: (data, row) => {
-          if (row.id != this.$store.state.user.id && this.$store.state.user.level != 1) {
+        onDelete: row => {
+          if (
+            row.id != this.$store.state.user.id &&
+            this.$store.state.user.level != 1
+          ) {
             this.$message.error('你不是管理员无权限进行此操作')
             return Promise.reject(false)
           }
-          return this.$api.delete('/api/users/delete/' + data.id)
+          return this.$api.delete('/api/users/delete/' + row.id)
         }
       }
     }
   },
-  mounted() {
-  },
-  methods: {
-  }
+  mounted() {},
+  methods: {}
 }
 </script>

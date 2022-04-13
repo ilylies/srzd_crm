@@ -4,15 +4,26 @@
       <el-data-table
         ref="table"
         v-bind="tableConfig"
-        :form="form"
         :search-form="searchForm"
       />
       <el-dialog title="跟进记录" :visible.sync="dialogTableVisible">
         <el-table :data="recordList">
-          <el-table-column property="userId" label="修改人" :formatter="userIdFormatter" width="150" />
+          <el-table-column
+            property="userId"
+            label="修改人"
+            :formatter="userIdFormatter"
+            width="150"
+          />
           <el-table-column property="content" label="跟进记录" width="200" />
           <el-table-column property="createTime" label="创建时间" />
         </el-table>
+      </el-dialog>
+      <el-dialog :title="dialogText" :visible.sync="dialogVisible" width="50%">
+        <el-form-renderer ref="form" label-width="80px" :content="content" />
+        <span slot="footer" class="dialog-footer">
+          <el-button @click="dialogVisible = false">取 消</el-button>
+          <el-button type="primary" @click="submit">确 定</el-button>
+        </span>
       </el-dialog>
     </page-main>
   </div>
@@ -20,15 +31,21 @@
 <script>
 import dayjs from 'dayjs'
 import { APPROPRIATION_STATYS_OPTIONS, COMPANY_TAGS_OPTIONS } from './const.js'
+import { companyNamePattern, numberPattern } from '@/util/pattern'
 export default {
   data() {
     return {
+      dialogVisible: false,
+      dialogText: '新增',
       dialogTableVisible: false,
+      updateData: {},
       appropriation_status: '',
       money: '',
       recordList: [],
       tableConfig: {
         url: '/api/saleSlips/list',
+        hasNew: false,
+        hasEdit: false,
         tableEventHandlers: {
           'cell-click': (row, column) => {
             if (column.property === 'record') {
@@ -37,7 +54,38 @@ export default {
             }
           }
         },
+        headerButtons: [
+          {
+            type: 'primary',
+            text: '新增',
+            atClick: () => {
+              this.dialogText = '新增'
+              this.dialogVisible = true
+              this.$refs.form && this.$refs.form.resetFields()
+              return Promise.resolve(false)
+            }
+          }
+        ],
+        extraButtons: [
+          {
+            type: 'primary',
+            text: '修改',
+            atClick: data => {
+              this.dialogText = '修改'
+              this.dialogVisible = true
+              this.updateData = data
+              this.$nextTick(() => {
+                this.$refs.form.updateForm(data)
+              })
+              return Promise.resolve(false)
+            }
+          }
+        ],
         columns: [
+          {
+            prop: 'id',
+            label: 'id'
+          },
           {
             prop: 'create_time',
             label: '建档时间',
@@ -97,38 +145,8 @@ export default {
             }
           }
         ],
-        onNew: data => {
-          const record = JSON.stringify([{
-            userId: this.$store.state.user.id,
-            createTime: dayjs(new Date()).format('YYYY-MM-DD HH:mm:ss'),
-            content: data.addRecord
-          }])
-          return this.$api.post('/api/saleSlips/create', Object.assign({}, {...data, record}))
-        },
-        onEdit: (data, row) => {
-          if (
-            row.telemarketer != this.$store.state.user.id &&
-            !this.disabledFn(row)
-          ) {
-            this.$message.error('你不是管理员或此订单电销员，无权进行此操作')
-            return Promise.reject(false)
-          }
-          const record = {
-            userId: this.$store.state.user.id,
-            createTime: dayjs(new Date()).format('YYYY-MM-DD HH:mm:ss'),
-            content: data.addRecord
-          }
-          const recordList = JSON.parse(row.record)
-            
-          if (data.addRecord) {
-            recordList.push(record)
-          }
-          return this.$api.put('/api/saleSlips/update/' + data.id, Object.assign({}, {...data, record: JSON.stringify(recordList)}))
-        },
         onDelete: data => {
-          if (
-            this.$store.state.user.level != 1
-          ) {
+          if (this.$store.state.user.level != 1) {
             this.$message.error('你不是管理员，无权进行此操作')
             return Promise.reject(false)
           }
@@ -195,7 +213,7 @@ export default {
         }
       ]
     },
-    form() {
+    content() {
       return [
         {
           type: 'input',
@@ -205,8 +223,19 @@ export default {
           rules: [
             {
               required: true,
-              message: '请输入企业名称',
               trigger: 'blur',
+              validator: (rule, value, callback) => {
+                console.log(value)
+                if (!value) {
+                  callback(new Error('请输入企业名称'))
+                } else {
+                  console.log(companyNamePattern.test(value))
+                  if (!companyNamePattern.test(value)) {
+                    return callback(new Error('请输入3-30个之间的企业名称,支持中英文和数字'))
+                  }
+                  callback()
+                }
+              },
               transform: v => v && v.trim()
             }
           ],
@@ -235,9 +264,18 @@ export default {
           rules: [
             {
               required: true,
-              message: '请输入放款金额',
               trigger: 'blur',
-              transform: v => v && v.trim()
+              transform: v => v && v.trim(),
+              validator: (rule, value, callback) => {
+                if (!value) {
+                  callback(new Error('请输入放款金额'))
+                } else {
+                  if (!numberPattern.test(value)) {
+                    return callback(new Error('请输入数字'))
+                  }
+                  callback()
+                }
+              }
             }
           ],
           el: { placeholder: '请输入放款金额' }
@@ -358,11 +396,79 @@ export default {
     disabledFn(row) {
       const data = this.teamList.find(i => i.value == row.team)
       const findTeamCaptain = data && data.captain
-      if (findTeamCaptain == this.$store.state.user.id || this.$store.state.user.level == 1) {
+      if (
+        findTeamCaptain == this.$store.state.user.id ||
+        this.$store.state.user.level == 1 ||
+        this.dialogText === '新增'
+      ) {
         // 所属团长或管理员
         return true
       }
       return false
+    },
+    submit() {
+      this.$refs.form.validate(valid => {
+        if (valid) {
+          if (this.dialogText === '修改') {
+            this.updateFn()
+          } else {
+            this.addFn()
+          }
+        }
+      })
+    },
+    addFn() {
+      const data = this.$refs.form.getFormValue()
+      const record = JSON.stringify([
+        {
+          userId: this.$store.state.user.id,
+          createTime: dayjs(new Date()).format('YYYY-MM-DD HH:mm:ss'),
+          content: data.addRecord
+        }
+      ])
+      this.$api
+        .post('/api/saleSlips/create', Object.assign({}, { ...data, record }))
+        .then(() => {
+          this.$message.success(this.dialogText + '成功')
+          this.dialogVisible = false
+          this.$refs.table.getList()
+        })
+        .catch(() => {
+          this.$message.warning(this.dialogText + '失败')
+        })
+    },
+    updateFn() {
+      const data = this.$refs.form.getFormValue()
+      if (
+        data.telemarketer != this.$store.state.user.id &&
+        !this.disabledFn(data)
+      ) {
+        this.$message.error('你不是管理员或此订单电销员，无权进行此操作')
+        return Promise.reject(false)
+      }
+      const record = {
+        userId: this.$store.state.user.id,
+        createTime: dayjs(new Date()).format('YYYY-MM-DD HH:mm:ss'),
+        content: data.addRecord
+      }
+      const recordList = JSON.parse(this.updateData.record)
+
+      if (data.addRecord) {
+        recordList.push(record)
+      }
+      this.$api
+        .put(
+          '/api/saleSlips/update/' + data.id,
+          Object.assign({}, { ...data, record: JSON.stringify(recordList) })
+        )
+        .then(() => {
+          this.$message.success(this.dialogText + '成功')
+          this.dialogVisible = false
+          this.$refs.table.getList()
+        })
+        .catch(() => {
+          this.$message.warning(this.dialogText + '失败')
+        })
     }
   }
 }

@@ -32,9 +32,8 @@ const reqMethods = [
 
 axios.interceptors.request.use(
   async function(config) {
-
     const token = store.state.user.token
-   
+
     // jwt 验证
     if (token) {
       config.headers.common['Authorization'] = `Bearer ${token}`
@@ -46,7 +45,7 @@ axios.interceptors.request.use(
     Message.error(error)
     // Do something with request error
     return Promise.reject(error)
-  },
+  }
 )
 
 axios.interceptors.response.use(
@@ -63,7 +62,7 @@ axios.interceptors.response.use(
     return Promise.resolve(response)
   },
   function(error) {
-    Message.error(error)
+    Message.error(error.response.data.message)
     // Any status codes that falls outside the range of 2xx cause this function to trigger
     // Do something with response error
     return Promise.reject(error.response)
@@ -74,11 +73,9 @@ reqMethods.forEach(method => {
   service[method] = (...rest) => {
     // 对$开头的方法不做任何处理
     if (method.startsWith('$')) {
-      return axios[method.replace('$', '')]
-        .apply(null, rest)
-        .then(res => {
-          return res.data
-        })
+      return axios[method.replace('$', '')].apply(null, rest).then(res => {
+        return res.data
+      })
     }
     return axios[method].apply(null, rest).then(res => res)
   }
