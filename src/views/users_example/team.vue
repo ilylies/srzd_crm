@@ -79,8 +79,6 @@ export default {
                 this.$api.delete('/api/team/delete/' + id).then(() => {
                   this.$message.success('删除成功')
                   this.$refs.table.getList()
-                }).catch(() => {
-                  this.$message.warning('删除失败')
                 })
               })
               
@@ -205,8 +203,6 @@ export default {
             this.$message.success(this.dialogText + '成功')
             this.dialogVisible = false
             this.$refs.table.getList()
-          }).catch(() => {
-            this.$message.warning(this.dialogText + '失败')
           })
         } else {
           

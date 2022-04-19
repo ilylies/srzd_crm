@@ -1,7 +1,7 @@
 /* eslint-disable no-useless-escape */
 // !  正则验证
 
-export const companyNamePattern = /[\u4e00-\u9fa5_a-zA-Z0-9_]{3,30}/
+export const companyNamePattern = /[\u4e00-\u9fa5_a-zA-Z0-9_]{2,30}/
 
 // 应用英文名正则, 数据库名字正则, 用户账号 允许英文,数字,中划线,下划线
 export const letterNumberDashUnderlinePattern = /^[a-zA-Z0-9-_]+$/

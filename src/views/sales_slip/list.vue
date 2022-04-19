@@ -5,6 +5,7 @@
         ref="table"
         v-bind="tableConfig"
         :search-form="searchForm"
+        @selection-change="onSelectionChange"
       />
       <el-dialog title="跟进记录" :visible.sync="dialogTableVisible">
         <el-table :data="recordList">
@@ -25,6 +26,13 @@
           <el-button type="primary" @click="submit">确 定</el-button>
         </span>
       </el-dialog>
+      <ImportDialog
+        :visible="showImportDialog"
+        :user-list="userList"
+        :team-list="teamList"
+        @close-dialog="showImportDialog = false"
+        @success="$refs.table.getList()"
+      />
     </page-main>
   </div>
 </template>
@@ -32,20 +40,29 @@
 import dayjs from 'dayjs'
 import { APPROPRIATION_STATYS_OPTIONS, COMPANY_TAGS_OPTIONS } from './const.js'
 import { companyNamePattern, numberPattern } from '@/util/pattern'
+import ImportDialog from './components/import-dialog'
+import {templateColumns} from './components/import-dialog/template-columns'
+import { exportExcel } from '@femessage/excel-it'
 export default {
+  components: {
+    ImportDialog
+  },
   data() {
     return {
       dialogVisible: false,
+      showImportDialog: false,
       dialogText: '新增',
       dialogTableVisible: false,
       updateData: {},
       appropriation_status: '',
       money: '',
       recordList: [],
+      selectData: [],
       tableConfig: {
         url: '/api/saleSlips/list',
         hasNew: false,
         hasEdit: false,
+        hasDelete: false,
         tableEventHandlers: {
           'cell-click': (row, column) => {
             if (column.property === 'record') {
@@ -64,6 +81,54 @@ export default {
               this.$refs.form && this.$refs.form.resetFields()
               return Promise.resolve(false)
             }
+          },
+          {
+            type: 'primary',
+            text: '批量导入',
+            atClick: () => {
+              this.showImportDialog = true
+              return Promise.resolve(false)
+            }
+          },
+          {
+            type: 'primary',
+            text: '批量导出',
+            disabled: () => !this.selectData.length,
+            atClick: () => {
+              const data = JSON.parse(JSON.stringify(this.selectData)).map(i => {
+                i.create_time = dayjs(i.create_time).format('YYYY-MM-DD HH:mm:ss')
+                i.company_tags = COMPANY_TAGS_OPTIONS.find(item => item.value === i.company_tags)
+                  .label
+                i.appropriation_status = i.appropriation_status
+                  .map(item => {
+                    const data = APPROPRIATION_STATYS_OPTIONS.find(
+                      i => i.value == item
+                    )
+                    return data ? data.label : item
+                  })
+                  .join('，')
+                i.team = this.teamList.find(item => item.value == i.team).label
+                i.telemarketer = this.userList.find(item => item.value == i.telemarketer).label
+                const recordList = i.record ? JSON.parse(i.record) : []
+                i.record = JSON.stringify(recordList.map(item => {
+                  return {
+                    修改人: this.userList.find(j => j.value == item.userId).label,
+                    跟进记录: item.content,
+                    创建时间: item.createTime
+                  }
+                }))
+                return i
+              })
+              exportExcel({
+                columns: Object.keys(templateColumns).map(k => ({
+                  prop: k,
+                  label: templateColumns[k]
+                })),
+                data,
+                fileName: '批量导入销售单'
+              })
+              return Promise.resolve(false)
+            }
           }
         ],
         extraButtons: [
@@ -79,9 +144,34 @@ export default {
               })
               return Promise.resolve(false)
             }
+          },
+          {
+            type: 'danger',
+            text: '删除',
+            atClick: data => {
+              if (this.$store.state.user.level != 1) {
+                this.$message.error('你不是管理员，无权进行此操作')
+                return Promise.reject(false)
+              }
+              this.$confirm(`确定要删除${name}这条数据吗?`, '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+              }).then(() => {
+                this.$api.delete('/api/saleSlips/delete/' + data.id).then(() => {
+                  this.$refs.table.getList()
+                  this.$message.success('删除成功')
+                }).catch(() => {
+                  this.$message.error('删除失败')
+                })
+              })
+              return Promise.resolve(false)
+            }
           }
         ],
+        persistSelection: true,
         columns: [
+          {type: 'selection'},
           {
             prop: 'id',
             label: 'id'
@@ -124,10 +214,14 @@ export default {
             prop: 'appropriation_status',
             label: '批款情况',
             formatter: ({ appropriation_status }) => {
-              const data = APPROPRIATION_STATYS_OPTIONS.find(
-                i => i.value == appropriation_status
-              )
-              return data ? data.label : appropriation_status
+              return appropriation_status
+                .map(item => {
+                  const data = APPROPRIATION_STATYS_OPTIONS.find(
+                    i => i.value == item
+                  )
+                  return data ? data.label : item
+                })
+                .join('，')
             }
           },
           {
@@ -144,14 +238,7 @@ export default {
               return this.userList.find(i => i.value === telemarketer).label
             }
           }
-        ],
-        onDelete: data => {
-          if (this.$store.state.user.level != 1) {
-            this.$message.error('你不是管理员，无权进行此操作')
-            return Promise.reject(false)
-          }
-          return this.$api.delete('/api/saleSlips/delete/' + data.id)
-        }
+        ]
       },
       userList: [],
       teamList: []
@@ -225,13 +312,13 @@ export default {
               required: true,
               trigger: 'blur',
               validator: (rule, value, callback) => {
-                console.log(value)
                 if (!value) {
                   callback(new Error('请输入企业名称'))
                 } else {
-                  console.log(companyNamePattern.test(value))
                   if (!companyNamePattern.test(value)) {
-                    return callback(new Error('请输入3-30个之间的企业名称,支持中英文和数字'))
+                    return callback(
+                      new Error('请输入2-30个之间的企业名称,支持中英文和数字')
+                    )
                   }
                   callback()
                 }
@@ -323,6 +410,7 @@ export default {
           el: {
             placeholder: '请选择(其他金额请直接输入)',
             filterable: true,
+            multiple: true,
             'allow-create': true,
             'default-first-option': true
           }
@@ -469,6 +557,9 @@ export default {
         .catch(() => {
           this.$message.warning(this.dialogText + '失败')
         })
+    },
+    onSelectionChange(data) {
+      this.selectData = data
     }
   }
 }

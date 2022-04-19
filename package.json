@@ -13,6 +13,7 @@
     "dependencies": {
         "@femessage/el-data-table": "^1.23.0",
         "@femessage/el-form-renderer": "^1.23.0",
+        "@femessage/excel-it": "^3.2.0",
         "@tinymce/tinymce-vue": "^3.2.6",
         "axios": "^0.21.0",
         "core-js": "^3.6.4",
