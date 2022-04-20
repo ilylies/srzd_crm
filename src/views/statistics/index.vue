@@ -25,7 +25,7 @@
                 class="card__item__logo"
               >
               <div class="card__item__detail">
-                <p class="card__item__number">{{ item.value }}</p>
+                <CountTo :start-val="0" :end-val="item.value" :duration="1500" class="card__item__number" />
                 <p class="card__item__status">{{ item.statusName }}</p>
               </div>
             </div>
@@ -65,7 +65,7 @@
                 class="card__item__logo"
               >
               <div class="card__item__detail">
-                <p class="card__item__number">{{ item.value }}</p>
+                <CountTo :start-val="0" :end-val="item.value" :duration="1000" class="card__item__number" />
                 <p class="card__item__status">{{ item.statusName }}</p>
               </div>
             </div>
@@ -88,7 +88,7 @@
             style="margin: 0 16px 16px 0;"
             @change="changeTeamOrUser(2)"
           />
-          <el-select v-model="selectedUser" placeholder="请选择电销员" @change="changeTeamOrUser(2, true)">
+          <el-select v-model="selectedUser" placeholder="请选择电销员" :duration="1000" @change="changeTeamOrUser(2, true)">
             <el-option
               v-for="item in userList"
               :key="item.value"
@@ -105,7 +105,7 @@
                 class="card__item__logo"
               >
               <div class="card__item__detail">
-                <p class="card__item__number">{{ item.value }}</p>
+                <CountTo :start-val="0" :end-val="item.value" :duration="1000" class="card__item__number" />
                 <p class="card__item__status">{{ item.statusName }}</p>
               </div>
             </div>
@@ -118,8 +118,12 @@
 
 <script>
 import dayjs from 'dayjs'
+import CountTo from 'vue-count-to'
 export default {
   name: 'Index',
+  components: {
+    CountTo
+  },
   data() {
     return {
       totalPicker: [dayjs(new Date()).format('YYYY-MM-DD'), dayjs(new Date()).format('YYYY-MM-DD')],
