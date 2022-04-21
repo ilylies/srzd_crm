@@ -13,6 +13,7 @@
             start-placeholder="开始日期"
             end-placeholder="结束日期"
             value-format="yyyy-MM-dd"
+            style="margin: 0 16px 16px 0;"
             :picker-options="pickerOptions"
             @change="getSalesTotalByTime"
           />

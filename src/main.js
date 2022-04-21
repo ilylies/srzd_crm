@@ -16,10 +16,10 @@ Vue.use(cookies)
 import VueMeta from 'vue-meta'
 Vue.use(VueMeta)
 
-import ElementUI, {Message, MessageBox} from 'element-ui'
-import 'element-ui/lib/theme-chalk/index.css'
 import ElDataTable from '@femessage/el-data-table'
 import ElFormRenderer from '@femessage/el-form-renderer'
+import ElementUI, { Message, MessageBox } from '@femessage/element-ui'
+import '@femessage/element-ui/lib/theme-chalk/index.css'
 Vue.use(ElementUI)
 Vue.prototype.$message = Message
 Vue.prototype.$confirm = MessageBox.confirm

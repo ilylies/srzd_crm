@@ -55,6 +55,9 @@ textarea {
         min-width: 80px;
     }
 }
+.el-form-item .el-form-item {
+    margin-bottom: 22px;
+}
 @media screen and (max-width: 780px) {
     .el-dialog {
         width: 90vw;

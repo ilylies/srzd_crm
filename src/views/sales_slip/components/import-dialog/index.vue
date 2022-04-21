@@ -13,7 +13,7 @@
         @dragover="onUploadAreaDragOver"
       >
         <img class="upload-area-icon" src="./images/excel.svg">
-        <div class="upload-area-title">上传 excel 商品信息表</div>
+        <div class="upload-area-title">上传 excel 表</div>
         <div class="el-upload__text">
           将文件拖到此处，或
           <el-button type="text" class="btn-click">点击上传</el-button>
@@ -82,7 +82,7 @@ const ATTENTIONS = `填写须知：
       企业联系人/法人：文本（必填）
       企业标签：文本（必填）[可填值为：已放款；已拜访；短期办不了；待跟进；已办理拒绝；可以继续办理；办理中]
       放款金额：文本（必填，必须为数字）
-      批款情况：文本（必填）[ 格式：若有多种情况用英文逗号隔开]
+      批款情况：文本（必填）[ 格式：银行+批款金额，若有多种情况用英文逗号隔开，银行可选项为：建行；邮政；交行；广发；微众；苏宁；金城；网商]
       所属团队：文本（必填）必须填入系统已创建的团队名称
       电销员：文本（必填）必须填入系统已创建的电销员名称
 `
@@ -211,16 +211,30 @@ export default {
           if (k === 'team') {
             const data = this.teamList.find(i => i.label === item[k])
             if (!data) {
-              item.msg += '该团队不存在\n；'
+              item.msg += '该团队不存在；'
               return
             }
           }
           if (k === 'telemarketer') {
             const data = this.userList.find(i => i.label === item[k])
             if (!data) {
-              item.msg += '该电销员不存在'
+              item.msg += '该电销员不存在；'
               return
             }
+          }
+          if (k === 'appropriation_status') {
+            try {
+              item[k].split(',').map(i => {
+                const arr = i.split('+')
+                return {
+                  appropriation_status: APPROPRIATION_STATYS_OPTIONS.find(j => j.label === arr[0]).value,
+                  amount: Number(arr[1])
+                }
+              })
+            } catch (error) {
+              item.msg += '批款情况格式错误或输入银行错误；'
+            }
+            
           }
         })
         if (!item.msg) {
@@ -335,21 +349,19 @@ export default {
             return
           }
           if (k === 'appropriation_status') {
-            const arr = item[k].split(',')
-            obj[k] = arr.map(i => {
-              const li = APPROPRIATION_STATYS_OPTIONS.find(j => j.label == i)
-              if (li) {
-                return li.value
+            obj[k] = item[k].split(',').map(i => {
+              const arr = i.split('+')
+              return {
+                appropriation_status: APPROPRIATION_STATYS_OPTIONS.find(j => j.label === arr[0]).value,
+                amount: Number(arr[1])
               }
-              return i
-            }).join(',')
+            })
             return
           }
           obj[k] = item[k]
         })
         return obj
       })
-      console.log('[ importedData ] >', importedData)
       this.confirmButtonLoading = true
       this.$api.$post('/api/saleSlips/importSalesSlip', {importedData}).then(() => {
         this.$message.success('导入成功')

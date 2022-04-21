@@ -13,14 +13,27 @@
             property="userId"
             label="修改人"
             :formatter="userIdFormatter"
-            width="150"
           />
-          <el-table-column property="content" label="跟进记录" width="200" />
+          <el-table-column property="content" label="跟进记录" />
           <el-table-column property="createTime" label="创建时间" />
         </el-table>
       </el-dialog>
-      <el-dialog :title="dialogText" :visible.sync="dialogVisible" width="50%">
-        <el-form-renderer ref="form" label-width="80px" :content="content" />
+      <el-dialog title="批款情况" :visible.sync="dialogAppropriationVisible">
+        <el-table :data="appropriation">
+          <el-table-column
+            property="appropriation_status"
+            label="银行"
+            :formatter="bankFormatter"
+          />
+          <el-table-column property="amount" label="放款金额" />
+        </el-table>
+      </el-dialog>
+      <el-dialog :title="dialogText" :visible.sync="dialogVisible" @close="updateData={}">
+        <el-form-renderer ref="form" label-width="100px" :content="content">
+          <el-form-item slot="id:team" label="批款情况">
+            <Appropriation ref="appropriation" :readonly="!disabledFn(updateData)" :values="updateData.appropriation" />
+          </el-form-item>
+        </el-form-renderer>
         <span slot="footer" class="dialog-footer">
           <el-button @click="dialogVisible = false">取 消</el-button>
           <el-button type="primary" @click="submit">确 定</el-button>
@@ -39,25 +52,29 @@
 <script>
 import dayjs from 'dayjs'
 import { APPROPRIATION_STATYS_OPTIONS, COMPANY_TAGS_OPTIONS } from './const.js'
-import { companyNamePattern, numberPattern } from '@/util/pattern'
+import { companyNamePattern } from '@/util/pattern'
 import ImportDialog from './components/import-dialog'
 import {templateColumns} from './components/import-dialog/template-columns'
 import { exportExcel } from '@femessage/excel-it'
+import Appropriation from './components/appropriation'
 export default {
   components: {
-    ImportDialog
+    ImportDialog,
+    Appropriation
   },
   data() {
     return {
+      APPROPRIATION_STATYS_OPTIONS,
       dialogVisible: false,
       showImportDialog: false,
       dialogText: '新增',
       dialogTableVisible: false,
+      dialogAppropriationVisible: false,
       updateData: {},
-      appropriation_status: '',
       money: '',
       recordList: [],
       selectData: [],
+      appropriation: [],
       tableConfig: {
         url: '/api/saleSlips/list',
         hasNew: false,
@@ -68,6 +85,10 @@ export default {
             if (column.property === 'record') {
               this.recordList = JSON.parse(row.record)
               this.dialogTableVisible = true
+            }
+            if (column.property === 'appropriation') {
+              this.appropriation = row.appropriation
+              this.dialogAppropriationVisible = true
             }
           }
         },
@@ -99,24 +120,20 @@ export default {
                 i.create_time = dayjs(i.create_time).format('YYYY-MM-DD HH:mm:ss')
                 i.company_tags = COMPANY_TAGS_OPTIONS.find(item => item.value === i.company_tags)
                   .label
-                i.appropriation_status = i.appropriation_status
+                i.appropriation_status = i.appropriation
                   .map(item => {
                     const data = APPROPRIATION_STATYS_OPTIONS.find(
-                      i => i.value == item
+                      i => i.value == item.appropriation_status
                     )
-                    return data ? data.label : item
+                    return data.label + '+' + item.amount
                   })
-                  .join('，')
+                  .join(',')
                 i.team = this.teamList.find(item => item.value == i.team).label
                 i.telemarketer = this.userList.find(item => item.value == i.telemarketer).label
                 const recordList = i.record ? JSON.parse(i.record) : []
-                i.record = JSON.stringify(recordList.map(item => {
-                  return {
-                    修改人: this.userList.find(j => j.value == item.userId).label,
-                    跟进记录: item.content,
-                    创建时间: item.createTime
-                  }
-                }))
+                i.record = recordList.map(item => {
+                  return '修改人:' + this.userList.find(j => j.value == item.userId).label + ',跟进记录:' + item.content + ',创建时间:' + item.createTime
+                }).join(';')
                 return i
               })
               exportExcel({
@@ -125,7 +142,7 @@ export default {
                   label: templateColumns[k]
                 })),
                 data,
-                fileName: '批量导入销售单'
+                fileName: '批量导出销售单'
               })
               return Promise.resolve(false)
             }
@@ -137,8 +154,8 @@ export default {
             text: '修改',
             atClick: data => {
               this.dialogText = '修改'
-              this.dialogVisible = true
               this.updateData = data
+              this.dialogVisible = true
               this.$nextTick(() => {
                 this.$refs.form.updateForm(data)
               })
@@ -211,17 +228,10 @@ export default {
             }
           },
           {
-            prop: 'appropriation_status',
+            prop: 'appropriation',
             label: '批款情况',
-            formatter: ({ appropriation_status }) => {
-              return appropriation_status
-                .map(item => {
-                  const data = APPROPRIATION_STATYS_OPTIONS.find(
-                    i => i.value == item
-                  )
-                  return data ? data.label : item
-                })
-                .join('，')
+            formatter: () => {
+              return <el-button type="text">查看</el-button>
             }
           },
           {
@@ -263,19 +273,6 @@ export default {
           el: {
             placeholder: '请选择',
             clearable: true
-          }
-        },
-        {
-          type: 'select',
-          id: 'appropriation_status',
-          label: '批款情况',
-          options: APPROPRIATION_STATYS_OPTIONS,
-          el: {
-            placeholder: '请选择(其他金额请直接输入)',
-            clearable: true,
-            filterable: true,
-            'allow-create': true,
-            'default-first-option': true
           }
         },
         {
@@ -343,30 +340,30 @@ export default {
           ],
           el: { placeholder: '请输入企业联系人/法人' }
         },
-        {
-          type: 'input',
-          id: 'loan_amount',
-          label: '放款金额',
-          disabled: row => !this.disabledFn(row),
-          rules: [
-            {
-              required: true,
-              trigger: 'blur',
-              transform: v => v && v.trim(),
-              validator: (rule, value, callback) => {
-                if (!value) {
-                  callback(new Error('请输入放款金额'))
-                } else {
-                  if (!numberPattern.test(value)) {
-                    return callback(new Error('请输入数字'))
-                  }
-                  callback()
-                }
-              }
-            }
-          ],
-          el: { placeholder: '请输入放款金额' }
-        },
+        // {
+        //   type: 'input',
+        //   id: 'loan_amount',
+        //   label: '放款金额',
+        //   disabled: row => !this.disabledFn(row),
+        //   rules: [
+        //     {
+        //       required: true,
+        //       trigger: 'blur',
+        //       transform: v => v && v.trim(),
+        //       validator: (rule, value, callback) => {
+        //         if (!value) {
+        //           callback(new Error('请输入放款金额'))
+        //         } else {
+        //           if (!numberPattern.test(value)) {
+        //             return callback(new Error('请输入数字'))
+        //           }
+        //           callback()
+        //         }
+        //       }
+        //     }
+        //   ],
+        //   el: { placeholder: '请输入放款金额' }
+        // },
         {
           type: 'select',
           id: 'company_tags',
@@ -393,27 +390,6 @@ export default {
             }
           ],
           el: { placeholder: '请输入跟进记录' }
-        },
-        {
-          type: 'select',
-          id: 'appropriation_status',
-          label: '批款情况',
-          options: APPROPRIATION_STATYS_OPTIONS,
-          disabled: row => !this.disabledFn(row),
-          rules: [
-            {
-              required: true,
-              message: '请选择批款情况',
-              trigger: 'blur'
-            }
-          ],
-          el: {
-            placeholder: '请选择(其他金额请直接输入)',
-            filterable: true,
-            multiple: true,
-            'allow-create': true,
-            'default-first-option': true
-          }
         },
         {
           type: 'select',
@@ -481,6 +457,9 @@ export default {
     userIdFormatter(row) {
       return this.userList.find(i => i.value == Number(row.userId)).label
     },
+    bankFormatter(row) {
+      return APPROPRIATION_STATYS_OPTIONS.find(i => i.value == row.appropriation_status).label
+    },
     disabledFn(row) {
       const data = this.teamList.find(i => i.value == row.team)
       const findTeamCaptain = data && data.captain
@@ -494,18 +473,20 @@ export default {
       }
       return false
     },
-    submit() {
+    async submit() {
+      const appropriationValue = await this.$refs.appropriation.validate()
       this.$refs.form.validate(valid => {
         if (valid) {
+          if (!appropriationValue) return
           if (this.dialogText === '修改') {
-            this.updateFn()
+            this.updateFn(appropriationValue)
           } else {
-            this.addFn()
+            this.addFn(appropriationValue)
           }
         }
       })
     },
-    addFn() {
+    addFn(appropriationValue) {
       const data = this.$refs.form.getFormValue()
       const record = JSON.stringify([
         {
@@ -515,7 +496,7 @@ export default {
         }
       ])
       this.$api
-        .post('/api/saleSlips/create', Object.assign({}, { ...data, record }))
+        .post('/api/saleSlips/create', Object.assign({}, { ...data, record, appropriation_status: appropriationValue }))
         .then(() => {
           this.$message.success(this.dialogText + '成功')
           this.dialogVisible = false
@@ -525,7 +506,7 @@ export default {
           this.$message.warning(this.dialogText + '失败')
         })
     },
-    updateFn() {
+    updateFn(appropriationValue) {
       const data = this.$refs.form.getFormValue()
       if (
         data.telemarketer != this.$store.state.user.id &&
@@ -539,7 +520,7 @@ export default {
         createTime: dayjs(new Date()).format('YYYY-MM-DD HH:mm:ss'),
         content: data.addRecord
       }
-      const recordList = JSON.parse(this.updateData.record)
+      const recordList = JSON.parse(this.updateData.record) || []
 
       if (data.addRecord) {
         recordList.push(record)
@@ -547,7 +528,7 @@ export default {
       this.$api
         .put(
           '/api/saleSlips/update/' + data.id,
-          Object.assign({}, { ...data, record: JSON.stringify(recordList) })
+          Object.assign({}, { ...data, record: JSON.stringify(recordList), appropriation_status: appropriationValue })
         )
         .then(() => {
           this.$message.success(this.dialogText + '成功')
