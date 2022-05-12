@@ -62,7 +62,7 @@ axios.interceptors.response.use(
     return Promise.resolve(response)
   },
   function(error) {
-    Message.error(error.response.data.message)
+    Message.error(error.response.data.message || '系统繁忙')
     // Any status codes that falls outside the range of 2xx cause this function to trigger
     // Do something with response error
     return Promise.reject(error.response)
